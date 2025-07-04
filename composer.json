@@ -1,0 +1,23 @@
+{
+  "name": "openeuropa/composer-dependent-patching",
+  "type": "composer-plugin",
+  "version": "1.0.0",
+  "require": {
+    "composer-plugin-api": "^2.0",
+    "cweagans/composer-patches": "^2.0"
+  },
+  "require-dev": {
+    "composer/composer": "^2.0"
+  },
+  "conflict": {
+    "cweagans/composer-patches": "<2"
+  },
+  "autoload": {
+    "psr-4": {
+      "OpenEuropa\\ComposerDependentPatching\\": "./src/"
+    }
+  },
+  "extra": {
+    "class": "OpenEuropa\\ComposerDependentPatching\\Plugin"
+  }
+}
