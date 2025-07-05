@@ -1,7 +1,7 @@
-# composer_dependent_patching
+# Composer Dependent Patches
 
 The plugin builds on cweagans/composer-patches version 2. The version
-constrained patches must be defined under 'extra.oe-patches' key in
+constrained patches must be defined under 'extra.dependent-patches' key in
 composer.json. To set version constraints on a patch definition, the expanded
 format must be used. The version constraint needs to be placed in the extra
 section of the patch definition.
@@ -10,7 +10,7 @@ Usage:
 ```json
 {
   "extra": {
-    "oe-patches": {
+    "dependent-patches": {
       "vendor/package": [
         {
           "description": "Patch for package version below 2.0",
