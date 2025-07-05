@@ -1,5 +1,5 @@
 {
-  "name": "openeuropa/composer-dependent-patching",
+  "name": "openeuropa/composer-dependent-patches",
   "type": "composer-plugin",
   "version": "1.0.0",
   "require": {
@@ -14,10 +14,10 @@
   },
   "autoload": {
     "psr-4": {
-      "OpenEuropa\\ComposerDependentPatching\\": "./src/"
+      "OpenEuropa\\ComposerDependentPatches\\": "./src/"
     }
   },
   "extra": {
-    "class": "OpenEuropa\\ComposerDependentPatching\\Plugin"
+    "class": "OpenEuropa\\ComposerDependentPatches\\Plugin"
   }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OpenEuropa\ComposerDependentPatching\Resolver;
+namespace OpenEuropa\ComposerDependentPatches\Resolver;
 
 use cweagans\Composer\Patch;
 

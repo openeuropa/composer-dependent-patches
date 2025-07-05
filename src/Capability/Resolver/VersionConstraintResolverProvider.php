@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace OpenEuropa\ComposerDependentPatching\Capability\Resolver;
+namespace OpenEuropa\ComposerDependentPatches\Capability\Resolver;
 
 use cweagans\Composer\Capability\Resolver\CoreResolverProvider;
-use OpenEuropa\ComposerDependentPatching\Resolver\Dependencies;
-use OpenEuropa\ComposerDependentPatching\Resolver\RootComposer;
+use OpenEuropa\ComposerDependentPatches\Resolver\Dependencies;
+use OpenEuropa\ComposerDependentPatches\Resolver\RootComposer;
 
 class VersionConstraintResolverProvider extends CoreResolverProvider
 {

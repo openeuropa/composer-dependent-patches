@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OpenEuropa\ComposerDependentPatching\Resolver;
+namespace OpenEuropa\ComposerDependentPatches\Resolver;
 
 use Composer\Semver\VersionParser;
 use cweagans\Composer\Patch;
@@ -30,7 +30,7 @@ abstract class VersionConstraintResolverBase extends ResolverBase implements Ver
     //   Ideally, the version constrained patches should also be defined in
     //   extra.patches, but for the time being they need to be separated from
     //   regular patches.
-    $definitions = $extra['oe-patches'] ?? [];
+    $definitions = $extra['dependent-patches'] ?? [];
     return is_array($definitions) ? $definitions : [];
   }
 

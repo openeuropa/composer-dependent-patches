@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace OpenEuropa\ComposerDependentPatching;
+namespace OpenEuropa\ComposerDependentPatches;
 
 use Composer\Installer\PackageEvent;
 use Composer\Installer\PackageEvents;
 use cweagans\Composer\Capability\Resolver\ResolverProvider;
 use cweagans\Composer\Plugin\Patches;
 use cweagans\Composer\Resolver;
-use OpenEuropa\ComposerDependentPatching\Capability\Resolver\VersionConstraintResolverProvider;
+use OpenEuropa\ComposerDependentPatches\Capability\Resolver\VersionConstraintResolverProvider;
 
 /**
  * Composer plugin providing support for patch version constraints.
  * 
  * The plugin builds on cweagans/composer-patches version 2. The version
- * constrained patches must be defined under 'extra.oe-patches' key in
+ * constrained patches must be defined under 'extra.dependent-patches' key in
  * composer.json. To set version constraints on a patch definition, the expanded
  * format must be used. The version constraint needs to be placed in the extra
  * section of the patch definition.
@@ -25,7 +25,7 @@ use OpenEuropa\ComposerDependentPatching\Capability\Resolver\VersionConstraintRe
  * {
  *   [...],
  *   "extra": {
- *     "oe-patches": {
+ *     "dependent-patches": {
  *       "vendor/package": [
  *         {
  *           "description": "Patch for package version below 2.0",
@@ -95,7 +95,7 @@ class Plugin extends Patches
       return;
     }
 
-    $this->io->write('  - <info>[composer-dependent-patching] Plugin is collecting patches.</info>');
+    $this->io->write('  - <info>[composer-dependent-patches] Plugin is collecting patches.</info>');
     
     // Disable all composer-patches resolvers.
     $disabled = [
@@ -113,7 +113,7 @@ class Plugin extends Patches
    */
   public function patchPackage(PackageEvent $event): void {
     $package = $this->getPackageFromOperation($event->getOperation());
-    if ($package->getName() === 'openeuropa/composer-dependent-patching') {
+    if ($package->getName() === 'openeuropa/composer-dependent-patches') {
       // See comment in parent method for explanation.
       return;
     }

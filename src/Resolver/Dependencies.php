@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OpenEuropa\ComposerDependentPatching\Resolver;
+namespace OpenEuropa\ComposerDependentPatches\Resolver;
 
 use cweagans\Composer\Patch;
 use cweagans\Composer\PatchCollection;
@@ -22,7 +22,7 @@ class Dependencies extends VersionConstraintResolverBase
       return;
     }
 
-    $this->io->write('  - <info>[composer-dependent-patching] Resolving patches from dependencies.</info>');
+    $this->io->write('  - <info>[composer-dependent-patches] Resolving patches from dependencies.</info>');
 
     $ignored_dependencies = $this->plugin->getConfig('ignore-dependency-patches');
     foreach ($locked_packages as $locked_package) {
