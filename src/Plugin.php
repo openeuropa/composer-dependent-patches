@@ -5,107 +5,83 @@ declare(strict_types=1);
 namespace OpenEuropa\ComposerDependentPatches;
 
 use Composer\Installer\PackageEvent;
-use Composer\Installer\PackageEvents;
-use cweagans\Composer\Capability\Resolver\ResolverProvider;
+use cweagans\Composer\Downloader;
+use cweagans\Composer\PatchCollection;
 use cweagans\Composer\Plugin\Patches;
-use cweagans\Composer\Resolver;
-use OpenEuropa\ComposerDependentPatches\Capability\Resolver\VersionConstraintResolverProvider;
 
 /**
  * Composer plugin providing support for patch version constraints.
- * 
- * The plugin builds on cweagans/composer-patches version 2. The version
- * constrained patches must be defined under 'extra.dependent-patches' key in
- * composer.json. To set version constraints on a patch definition, the expanded
- * format must be used. The version constraint needs to be placed in the extra
- * section of the patch definition.
- *
- * Usage:
- * <code>
- * {
- *   [...],
- *   "extra": {
- *     "dependent-patches": {
- *       "vendor/package": [
- *         {
- *           "description": "Patch for package version below 2.0",
- *           "url": "/path/to/lt2.patch",
- *           "extra": {
- *             "version": "<2.0"
- *           }
- *         },
- *         {
- *           "description": "Patch for package version 2.0 or above",
- *           "url": "/path/to/gte2.patch",
- *           "extra": {
- *             "version": ">=2.0"
- *           }
- *         }
- *       ]
- *     }
- *   }
- * }
- * </code>
- *
- * Root package and dependency package patches are both supported. Patches file 
- * can't be used for these patches, they must be placed in composer.json.
- * 
- * The plugin resolves and applies the version constraint patches separately
- * from the processes of composer-patches itself, and uses custom resolvers 
- * to collect the patches.
- * 
- * @see https://docs.cweagans.net/composer-patches/usage/defining-patches/#expanded-format
  */
 class Plugin extends Patches
 {
-
   /**
-   * @var bool $patches_collected
+   * @var ?PatchCollection $patchCollection
    */
-  protected bool $patches_collected = FALSE;
+  protected ?PatchCollection $dependentPatchCollection;
 
   /**
    * {@inheritdoc}
    */
   public function getCapabilities(): array
   {
-    return [
-      ResolverProvider::class => VersionConstraintResolverProvider::class,
-    ];
+    return [];
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents(): array
+  public function createNewPatchesLock(): void 
   {
-    return [
-      PackageEvents::PRE_PACKAGE_INSTALL => ['collectPatches'],
-      PackageEvents::PRE_PACKAGE_UPDATE => ['collectPatches'],
-    ] + parent::getSubscribedEvents();
+    $this->dependentPatchCollection = $this->resolvePatches();
+    $downloader = new Downloader($this->composer, $this->io, $this->getConfig('disable-downloaders'));
+    foreach ($this->dependentPatchCollection->getPatchedPackages() as $package) {
+      foreach ($this->dependentPatchCollection->getPatchesForPackage($package) as $patch) {
+        $this->download($patch);
+        $this->guessDepth($patch);
+      }
+    }
+    $this->locker->setLockData($this->dependentPatchCollection);
   }
 
   /**
-   * Collects patches using resolvers defined by the plugin.
+   * {@inheritdoc}
    */
-  public function collectPatches(): void
+  public function loadLockedPatches(): void 
   {
-    if ($this->patches_collected) {
-      // Collect patches only once.
+    $locked = $this->locker->isLocked();
+    if (!$locked) {
+      $filename = pathinfo($this->getLockFile()->getPath(), \PATHINFO_BASENAME);
+      $this->io->write("<warning>$filename does not exist. Creating a new $filename.</warning>");
+      $this->createNewPatchesLock();
       return;
     }
 
-    $this->io->write('  - <info>[composer-dependent-patches] Plugin is collecting patches.</info>');
-    
-    // Disable all composer-patches resolvers.
-    $disabled = [
-      '\cweagans\Composer\Resolver\RootComposer',
-      '\cweagans\Composer\Resolver\PatchesFile',
-      '\cweagans\Composer\Resolver\Dependencies',
-    ];
-    $resolver = new Resolver($this->composer, $this->io, $disabled);
-    $this->patchCollection = $resolver->loadFromResolvers();
-    $this->patches_collected = TRUE;
+    $this->dependentPatchCollection = PatchCollection::fromJson($this->locker->getLockData());
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getPatchesLockFilePath(): string
+  {
+    $composer_file = \Composer\Factory::getComposerFile();
+
+    $dir = dirname(realpath($composer_file));
+    $base = pathinfo($composer_file, \PATHINFO_FILENAME);
+
+    if ($base === 'composer') {
+      return "$dir/dependent-patches.lock.json";
+    }
+
+    return "$dir/$base-dependent-patches.lock.json";
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function resolvePatches(): PatchCollection {
+    $resolver = new Resolver($this->composer, $this->io, []);
+    return $resolver->loadFromResolvers();
   }
 
   /**
@@ -118,10 +94,7 @@ class Plugin extends Patches
       return;
     }
 
-    // @todo composer-patches keeps the IO messages about applying the patches
-    //   to a minimum (most of them are restricted to verbose/debug mode).
-    //   Consider fully overriding the parent method to display more information
-    //   in the console in non-verbose mode.
+    $this->patchCollection = $this->dependentPatchCollection;
     parent::patchPackage($event);
   }
 
