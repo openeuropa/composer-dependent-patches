@@ -38,3 +38,30 @@ can't be used for these patches, they must be placed in composer.json.
 The plugin resolves and applies the version constraint patches separately
 from the processes of composer-patches itself, and uses custom resolvers
 to collect the patches.
+
+## Development
+
+### Testing
+
+The plugin includes automated tests using PHPUnit. To run the tests:
+
+```bash
+# Install development dependencies.
+composer install
+
+# Run tests.
+composer test
+
+# Run tests with coverage (requires Xdebug).
+composer test-coverage
+```
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
+
+The project uses GitHub Actions for continuous integration, testing against multiple PHP and Composer versions.

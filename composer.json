@@ -1,13 +1,18 @@
 {
   "name": "openeuropa/composer-dependent-patches",
+  "description": "A Composer plugin that extends cweagans/composer-patches to support dependent patches functionality",
   "type": "composer-plugin",
-  "version": "1.0.0",
+  "license": "EUPL-1.2",
   "require": {
     "composer-plugin-api": "^2.0",
-    "cweagans/composer-patches": "^2.0"
+    "cweagans/composer-patches": "^2.0@beta"
   },
+  "minimum-stability": "beta",
+  "prefer-stable": true,
   "require-dev": {
-    "composer/composer": "^2.0"
+    "composer/composer": "^2.0",
+    "phpunit/phpunit": "^10.0",
+    "mockery/mockery": "^1.6"
   },
   "conflict": {
     "cweagans/composer-patches": "<2"
@@ -17,7 +22,21 @@
       "OpenEuropa\\ComposerDependentPatches\\": "./src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "OpenEuropa\\ComposerDependentPatches\\Tests\\": "./tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "test-coverage": "phpunit --coverage-html coverage"
+  },
   "extra": {
     "class": "OpenEuropa\\ComposerDependentPatches\\Plugin"
+  },
+  "config": {
+    "allow-plugins": {
+      "cweagans/composer-patches": true
+    }
   }
 }

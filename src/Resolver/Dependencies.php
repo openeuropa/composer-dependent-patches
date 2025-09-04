@@ -26,6 +26,11 @@ class Dependencies extends VersionConstraintResolverBase
 
     $ignored_dependencies = $this->plugin->getConfig('ignore-dependency-patches');
     foreach ($locked_packages as $locked_package) {
+      // Validate that the locked package has a name key.
+      if (!isset($locked_package['name']) || !is_string($locked_package['name'])) {
+        continue;
+      }
+
       if (in_array($locked_package['name'], $ignored_dependencies)) {
         // Skip gathering patches from ignored dependency.
         continue;

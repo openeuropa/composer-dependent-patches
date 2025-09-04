@@ -66,7 +66,12 @@ class Plugin extends Patches
   {
     $composer_file = \Composer\Factory::getComposerFile();
 
-    $dir = dirname(realpath($composer_file));
+    $realpath = realpath($composer_file);
+    if ($realpath === false) {
+      throw new \RuntimeException("Unable to resolve real path for composer file: $composer_file");
+    }
+
+    $dir = dirname($realpath);
     $base = pathinfo($composer_file, \PATHINFO_FILENAME);
 
     if ($base === 'composer') {

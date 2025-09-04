@@ -12,14 +12,14 @@ abstract class VersionConstraintResolverBase extends ResolverBase implements Ver
 {
 
   /**
-   * @var array $lockedPackages
+   * @var array|null $lockedPackages
    */
-  protected array $lockedPackages = [];
+  protected ?array $lockedPackages = null;
 
   /**
    * {@inheritdoc}
    */
-  public function getPatchDefinitions(?string $package_name = NULL): array {
+  public function getPatchDefinitions(?string $package_name = null): array {
     $extra = $package_name
       ? $this->getLockedPackage($package_name)['extra'] ?? []
       : $this->composer->getPackage()->getExtra();
@@ -38,10 +38,12 @@ abstract class VersionConstraintResolverBase extends ResolverBase implements Ver
    * {@inheritdoc}
    */
   public function getLockedPackages(): array {
-    if (empty($this->lockedPackages)) {
+    if ($this->lockedPackages === null) {
       $locker = $this->composer->getLocker();
       if ($locker->isLocked()) {
         $this->lockedPackages = $locker->getLockData()['packages'] ?? [];
+      } else {
+        $this->lockedPackages = [];
       }
     }
 
@@ -52,35 +54,51 @@ abstract class VersionConstraintResolverBase extends ResolverBase implements Ver
    * {@inheritdoc}
    */
   public function getLockedPackage(string $name): ?array {
-    if ($packages = $this->getLockedPackages()) {
-      $key = array_search($name, array_column($packages, 'name'));
-      return $packages[$key] ?? NULL;
+    $packages = $this->getLockedPackages();
+    if (empty($packages)) {
+      return null;
     }
-    return NULL;
+    
+    $key = array_search($name, array_column($packages, 'name'));
+    if ($key === false) {
+      return null;
+    }
+    
+    return $packages[$key] ?? null;
   }
 
   /**
    * {@inheritdoc}
    */
   public function validateVersionConstraint(Patch $patch): bool {
-    $constraints = $patch->extra['version'] ?? NULL;
+    $constraints = $patch->extra['version'] ?? null;
     if (empty($constraints)) {
       // No version constraints were specified for the patch.
-      return TRUE;
+      return true;
     }
 
-    $package_version = $this->getLockedPackage($patch->package)['version'] ?? NULL;
-    if ($package_version) {
-      // Check if the patch constraint matches the locked package version.
-      $parser = new VersionParser();
+    $lockedPackage = $this->getLockedPackage($patch->package);
+    if ($lockedPackage === null || !isset($lockedPackage['version'])) {
+      // Cannot validate patch constraint if the locked version of the package to
+      // be patched is not available.
+      return false;
+    }
+
+    $package_version = $lockedPackage['version'];
+    if (!is_string($package_version) || empty($package_version)) {
+      return false;
+    }
+
+    // Check if the patch constraint matches the locked package version.
+    $parser = new VersionParser();
+    try {
       $constraint = $parser->parseConstraints($constraints);
       $provided = $parser->parseConstraints($package_version);
       return $constraint->matches($provided);
+    } catch (\Exception $e) {
+      // If version parsing fails, skip the patch to avoid errors.
+      return false;
     }
-
-    // Cannot validate patch constraint if the locked version of the package to
-    // be patched is not available.
-    return FALSE;
   }
 
 }

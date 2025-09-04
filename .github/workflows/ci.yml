@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: ['8.3', '8.4']
+        composer-version: ['2.7', '2.8']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, intl
+        tools: composer:${{ matrix.composer-version }}
+    
+    - name: Validate composer.json
+      run: composer validate --strict
+    
+    - name: Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.composer/cache
+        key: composer-${{ matrix.php-version }}-${{ hashFiles('**/composer.json') }}
+        restore-keys: composer-${{ matrix.php-version }}-
+    
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+    
+    - name: Run tests
+      run: composer test
+    
+    - name: Check coding standards
+      run: |
+        if [ -f vendor/bin/phpcs ]; then
+          vendor/bin/phpcs src/ --standard=PSR12
+        else
+          echo "PHPCS not installed, skipping coding standards check"
+        fi
+      continue-on-error: true

@@ -25,9 +25,10 @@ class Resolver extends ComposerPatchesResolver {
   /**
    * Get instance of this plugin.
    *
-   * @return Plugin|null
+   * @return Plugin
+   * @throws \RuntimeException If plugin instance cannot be found.
    */
-  protected function getPluginInstance(): ?Plugin
+  protected function getPluginInstance(): Plugin
   {
     foreach ($this->composer->getPluginManager()->getPlugins() as $plugin) {
       if ($plugin instanceof Plugin) {
@@ -35,6 +36,6 @@ class Resolver extends ComposerPatchesResolver {
       }
     }
 
-    return NULL;
+    throw new \RuntimeException('Plugin instance not found. Make sure the plugin is properly activated.');
   }
 }

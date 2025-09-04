@@ -1,0 +1,7 @@
+/.idea/
+/vendor/
+/coverage/
+.phpunit.cache/
+composer.lock
+patches.lock.json
+dependent-patches.lock.json
