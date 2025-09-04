@@ -156,4 +156,70 @@ class PluginTest extends TestCase
     {
         $this->assertInstanceOf(PluginInterface::class, $this->plugin);
     }
+
+    /**
+     * Test that hasPackageVersionsChanged returns true when no composer lock hash is stored.
+     */
+    public function testHasPackageVersionsChangedWithNoComposerLockHash(): void
+    {
+        // Mock locker to return lock data without _composer_lock_hash.
+        $mockLocker = Mockery::mock(\cweagans\Composer\Locker::class);
+        $mockLocker->shouldReceive('getLockData')
+            ->andReturn(['patches' => [], '_hash' => 'somehash']);
+            
+        $reflection = new ReflectionClass($this->plugin);
+        $lockerProperty = $reflection->getProperty('locker');
+        $lockerProperty->setAccessible(true);
+        $lockerProperty->setValue($this->plugin, $mockLocker);
+        
+        $method = $reflection->getMethod('hasPackageVersionsChanged');
+        $method->setAccessible(true);
+        
+        $this->assertTrue($method->invoke($this->plugin));
+    }
+
+    /**
+     * Test that hasPackageVersionsChanged returns false when already regenerated.
+     */
+    public function testHasPackageVersionsChangedWithAlreadyRegenerated(): void
+    {
+        $reflection = new ReflectionClass($this->plugin);
+        
+        // Set the flag to indicate patches already regenerated
+        $regeneratedProperty = $reflection->getProperty('patchesRegenerated');
+        $regeneratedProperty->setAccessible(true);
+        $regeneratedProperty->setValue($this->plugin, true);
+        
+        $method = $reflection->getMethod('hasPackageVersionsChanged');
+        $method->setAccessible(true);
+        
+        // Should return false when already regenerated.
+        $this->assertFalse($method->invoke($this->plugin));
+    }
+
+    /**
+     * Test that hasPackageVersionsChanged returns true when no composer lock hash stored.
+     */
+    public function testHasPackageVersionsChangedWithNoStoredHash(): void
+    {
+        // Mock plugin locker with no stored hash.
+        $mockPluginLocker = Mockery::mock(\cweagans\Composer\Locker::class);
+        $mockPluginLocker->shouldReceive('getLockData')
+            ->andReturn([
+                'patches' => [],
+                '_hash' => 'somehash'
+                // No _composer_lock_hash
+            ]);
+            
+        $reflection = new ReflectionClass($this->plugin);
+        $lockerProperty = $reflection->getProperty('locker');
+        $lockerProperty->setAccessible(true);
+        $lockerProperty->setValue($this->plugin, $mockPluginLocker);
+        
+        $method = $reflection->getMethod('hasPackageVersionsChanged');
+        $method->setAccessible(true);
+        
+        // Missing composer lock hash should return true.
+        $this->assertTrue($method->invoke($this->plugin));
+    }
 }

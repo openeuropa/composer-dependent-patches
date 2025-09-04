@@ -20,6 +20,11 @@ class Plugin extends Patches
   protected ?PatchCollection $dependentPatchCollection;
 
   /**
+   * @var bool Flag to track if we've already regenerated patches in this process
+   */
+  protected bool $patchesRegenerated = false;
+
+  /**
    * {@inheritdoc}
    */
   public function getCapabilities(): array
@@ -40,7 +45,8 @@ class Plugin extends Patches
         $this->guessDepth($patch);
       }
     }
-    $this->locker->setLockData($this->dependentPatchCollection);
+    $this->setLockDataWithPackageVersions($this->dependentPatchCollection);
+    $this->patchesRegenerated = true;
   }
 
   /**
@@ -56,7 +62,16 @@ class Plugin extends Patches
       return;
     }
 
-    $this->dependentPatchCollection = PatchCollection::fromJson($this->locker->getLockData());
+    if ($this->hasPackageVersionsChanged()) {
+      $filename = pathinfo($this->getLockFile()->getPath(), \PATHINFO_BASENAME);
+      $this->io->write("<warning>Package versions have changed since $filename was created. Regenerating lock file.</warning>");
+      $this->createNewPatchesLock();
+      return;
+    }
+
+    if (!isset($this->dependentPatchCollection)) {
+      $this->dependentPatchCollection = PatchCollection::fromJson($this->locker->getLockData());
+    }
   }
 
   /**
@@ -101,6 +116,70 @@ class Plugin extends Patches
 
     $this->patchCollection = $this->dependentPatchCollection;
     parent::patchPackage($event);
+  }
+
+  /**
+   * Check if package versions have changed since the dependent patches lock was created.
+   * Only returns true once per process to avoid multiple regenerations.
+   */
+  protected function hasPackageVersionsChanged(): bool {
+    // If we've already regenerated patches in this process, don't do it again
+    if ($this->patchesRegenerated) {
+      return false;
+    }
+
+    try {
+      $lockData = $this->locker->getLockData();
+    } catch (\Exception $e) {
+      return true;
+    }
+
+    if (!isset($lockData['_composer_lock_hash'])) {
+      return true;
+    }
+
+    // Use a simple heuristic: check if the patches lock file is newer than composer.lock
+    // If composer.lock is newer, then versions have likely changed
+    $composerLockPath = $this->composer->getConfig()->get('vendor-dir') . '/../composer.lock';
+    $patchesLockPath = static::getPatchesLockFilePath();
+    
+    if (!file_exists($composerLockPath) || !file_exists($patchesLockPath)) {
+      return true;
+    }
+    
+    $composerLockTime = filemtime($composerLockPath);
+    $patchesLockTime = filemtime($patchesLockPath);
+    
+    // If composer.lock was modified after patches lock, versions likely changed
+    return $composerLockTime > $patchesLockTime;
+  }
+
+  /**
+   * Get the content hash of the current composer.lock file.
+   */
+  protected function getComposerLockHash(): ?string {
+    $composerLocker = $this->composer->getLocker();
+    if (!$composerLocker->isLocked()) {
+      return null;
+    }
+
+    $composerLockData = $composerLocker->getLockData();
+    return $composerLockData['content-hash'] ?? null;
+  }
+
+  /**
+   * Set lock data with composer.lock hash included.
+   */
+  protected function setLockDataWithPackageVersions(PatchCollection $patchCollection): bool {
+    $lock = $patchCollection->jsonSerialize();
+    $lock['_hash'] = $this->locker->getCollectionHash($patchCollection);
+    $lock['_composer_lock_hash'] = $this->getComposerLockHash();
+    ksort($lock);
+
+    $lockFile = $this->getLockFile();
+    $lockFile->write($lock);
+    
+    return true;
   }
 
 }
