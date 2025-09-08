@@ -138,20 +138,7 @@ class Plugin extends Patches
       return true;
     }
 
-    // Use a simple heuristic: check if the patches lock file is newer than composer.lock
-    // If composer.lock is newer, then versions have likely changed
-    $composerLockPath = $this->composer->getConfig()->get('vendor-dir') . '/../composer.lock';
-    $patchesLockPath = static::getPatchesLockFilePath();
-    
-    if (!file_exists($composerLockPath) || !file_exists($patchesLockPath)) {
-      return true;
-    }
-    
-    $composerLockTime = filemtime($composerLockPath);
-    $patchesLockTime = filemtime($patchesLockPath);
-    
-    // If composer.lock was modified after patches lock, versions likely changed
-    return $composerLockTime > $patchesLockTime;
+    return $lockData['_composer_lock_hash'] !== $this->getComposerLockHash();
   }
 
   /**

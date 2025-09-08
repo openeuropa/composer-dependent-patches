@@ -256,7 +256,7 @@ class VersionConstraintResolverTest extends TestCase
      *
      * @return array<int, array{string, string, bool}> Test data.
      */
-    protected function versionConstraintProvider(): array
+    public static function versionConstraintProvider(): array
     {
         return [
             // [package_version, constraint, expected_result].
