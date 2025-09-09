@@ -56,13 +56,14 @@ class PluginTest extends TestCase
     }
 
     /**
-     * Test that getCapabilities returns an empty array.
+     * Test that getCapabilities returns command provider capability.
      */
     public function testGetCapabilities(): void
     {
         $capabilities = $this->plugin->getCapabilities();
         $this->assertIsArray($capabilities);
-        $this->assertEmpty($capabilities);
+        $this->assertArrayHasKey('Composer\Plugin\Capability\CommandProvider', $capabilities);
+        $this->assertEquals('OpenEuropa\ComposerDependentPatches\Capability\CommandProvider', $capabilities['Composer\Plugin\Capability\CommandProvider']);
     }
 
     /**

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace OpenEuropa\ComposerDependentPatches;
 
 use Composer\Installer\PackageEvent;
+use Composer\Plugin\Capability\CommandProvider as CommandProviderCapability;
 use cweagans\Composer\Downloader;
 use cweagans\Composer\PatchCollection;
 use cweagans\Composer\Plugin\Patches;
+use OpenEuropa\ComposerDependentPatches\Capability\CommandProvider;
 
 /**
  * Composer plugin providing support for patch version constraints.
@@ -29,7 +31,9 @@ class Plugin extends Patches
      */
     public function getCapabilities(): array
     {
-        return [];
+        return [
+            CommandProviderCapability::class => CommandProvider::class,
+        ];
     }
 
     /**
@@ -106,6 +110,19 @@ class Plugin extends Patches
     }
 
     /**
+     * Override to return dependent patch collection.
+     */
+    public function getPatchCollection(): ?PatchCollection
+    {
+        // Ensure dependent patches are loaded
+        if (!isset($this->dependentPatchCollection)) {
+            $this->loadLockedPatches();
+        }
+
+        return $this->dependentPatchCollection;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function patchPackage(PackageEvent $event): void
@@ -114,6 +131,11 @@ class Plugin extends Patches
         if ($package->getName() === 'openeuropa/composer-dependent-patches') {
             // See comment in parent method for explanation.
             return;
+        }
+
+        // Ensure dependent patches are loaded
+        if (!isset($this->dependentPatchCollection)) {
+            $this->loadLockedPatches();
         }
 
         $this->patchCollection = $this->dependentPatchCollection;
