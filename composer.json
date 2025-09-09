@@ -7,12 +7,14 @@
     "composer-plugin-api": "^2.0",
     "cweagans/composer-patches": "^2.0@beta"
   },
-  "minimum-stability": "beta",
+  "minimum-stability": "dev",
   "prefer-stable": true,
   "require-dev": {
     "composer/composer": "^2.0",
     "phpunit/phpunit": "^10.0",
-    "mockery/mockery": "^1.6"
+    "mockery/mockery": "^1.6",
+    "openeuropa/code-review-library": "^1.0@alpha",
+    "openeuropa/task-runner": "^2"
   },
   "conflict": {
     "cweagans/composer-patches": "<2"
@@ -36,7 +38,8 @@
   },
   "config": {
     "allow-plugins": {
-      "cweagans/composer-patches": true
+      "cweagans/composer-patches": true,
+      "phpro/grumphp-shim": true
     }
   }
 }

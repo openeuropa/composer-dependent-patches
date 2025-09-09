@@ -33,15 +33,15 @@ class PluginTest extends TestCase
     {
         $this->composer = Mockery::mock(Composer::class);
         $this->io = Mockery::mock(IOInterface::class);
-        
+
         $this->plugin = new Plugin();
-        
+
         // Use reflection to set protected properties.
         $reflection = new ReflectionClass($this->plugin);
         $composerProperty = $reflection->getProperty('composer');
         $composerProperty->setAccessible(true);
         $composerProperty->setValue($this->plugin, $this->composer);
-        
+
         $ioProperty = $reflection->getProperty('io');
         $ioProperty->setAccessible(true);
         $ioProperty->setValue($this->plugin, $this->io);
@@ -84,11 +84,11 @@ class PluginTest extends TestCase
         $tempDir = sys_get_temp_dir();
         $tempComposerFile = $tempDir . '/test-composer.json';
         file_put_contents($tempComposerFile, '{}');
-        
+
         // We can't easily mock static methods, so we'll test the current behavior.
         $path = Plugin::getPatchesLockFilePath();
         $this->assertStringContainsString('dependent-patches.lock.json', $path);
-        
+
         // Clean up.
         if (file_exists($tempComposerFile)) {
             unlink($tempComposerFile);
@@ -104,29 +104,29 @@ class PluginTest extends TestCase
         $mockPluginManager = Mockery::mock(PluginManager::class);
         $mockPluginManager->shouldReceive('getPlugins')
             ->andReturn([$this->plugin]);
-            
+
         $this->composer->shouldReceive('getPluginManager')
             ->andReturn($mockPluginManager);
-            
+
         // Mock the getPackage method needed by RootComposer resolver.
         $mockRootPackage = Mockery::mock(RootPackageInterface::class);
         $mockRootPackage->shouldReceive('getExtra')
             ->andReturn([]);
-            
+
         $this->composer->shouldReceive('getPackage')
             ->andReturn($mockRootPackage);
-            
+
         // Mock the getLocker method needed by Dependencies resolver.
         $mockLocker = Mockery::mock(Locker::class);
         $mockLocker->shouldReceive('isLocked')
             ->andReturn(false);
-            
+
         $this->composer->shouldReceive('getLocker')
             ->andReturn($mockLocker);
-            
+
         // Mock IO write calls.
         $this->io->shouldReceive('write')->zeroOrMoreTimes();
-        
+
         $result = $this->plugin->resolvePatches();
         $this->assertInstanceOf(PatchCollection::class, $result);
     }
@@ -166,15 +166,15 @@ class PluginTest extends TestCase
         $mockLocker = Mockery::mock(\cweagans\Composer\Locker::class);
         $mockLocker->shouldReceive('getLockData')
             ->andReturn(['patches' => [], '_hash' => 'somehash']);
-            
+
         $reflection = new ReflectionClass($this->plugin);
         $lockerProperty = $reflection->getProperty('locker');
         $lockerProperty->setAccessible(true);
         $lockerProperty->setValue($this->plugin, $mockLocker);
-        
+
         $method = $reflection->getMethod('hasPackageVersionsChanged');
         $method->setAccessible(true);
-        
+
         $this->assertTrue($method->invoke($this->plugin));
     }
 
@@ -184,15 +184,15 @@ class PluginTest extends TestCase
     public function testHasPackageVersionsChangedWithAlreadyRegenerated(): void
     {
         $reflection = new ReflectionClass($this->plugin);
-        
+
         // Set the flag to indicate patches already regenerated
         $regeneratedProperty = $reflection->getProperty('patchesRegenerated');
         $regeneratedProperty->setAccessible(true);
         $regeneratedProperty->setValue($this->plugin, true);
-        
+
         $method = $reflection->getMethod('hasPackageVersionsChanged');
         $method->setAccessible(true);
-        
+
         // Should return false when already regenerated.
         $this->assertFalse($method->invoke($this->plugin));
     }
@@ -210,15 +210,15 @@ class PluginTest extends TestCase
                 '_hash' => 'somehash'
                 // No _composer_lock_hash
             ]);
-            
+
         $reflection = new ReflectionClass($this->plugin);
         $lockerProperty = $reflection->getProperty('locker');
         $lockerProperty->setAccessible(true);
         $lockerProperty->setValue($this->plugin, $mockPluginLocker);
-        
+
         $method = $reflection->getMethod('hasPackageVersionsChanged');
         $method->setAccessible(true);
-        
+
         // Missing composer lock hash should return true.
         $this->assertTrue($method->invoke($this->plugin));
     }

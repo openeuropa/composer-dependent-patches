@@ -35,7 +35,7 @@ class VersionConstraintResolverTest extends TestCase
         $this->composer = Mockery::mock(Composer::class);
         $this->io = Mockery::mock(IOInterface::class);
         $this->plugin = Mockery::mock(Plugin::class);
-        
+
         $this->dependenciesResolver = new Dependencies($this->composer, $this->io, $this->plugin);
         $this->rootResolver = new RootComposer($this->composer, $this->io, $this->plugin);
     }
@@ -65,17 +65,17 @@ class VersionConstraintResolverTest extends TestCase
                 ]
             ]
         ];
-        
+
         $this->composer->shouldReceive('getPackage')
             ->once()
             ->andReturn($mockRootPackage);
-            
+
         $mockRootPackage->shouldReceive('getExtra')
             ->once()
             ->andReturn($extraData);
-        
+
         $result = $this->rootResolver->getPatchDefinitions();
-        
+
         $this->assertIsArray($result);
         $this->assertArrayHasKey('vendor/package', $result);
         $this->assertCount(1, $result['vendor/package']);
@@ -87,17 +87,17 @@ class VersionConstraintResolverTest extends TestCase
     public function testGetPatchDefinitionsReturnsEmptyWhenNoPatchesDefined(): void
     {
         $mockRootPackage = Mockery::mock(RootPackageInterface::class);
-        
+
         $this->composer->shouldReceive('getPackage')
             ->once()
             ->andReturn($mockRootPackage);
-            
+
         $mockRootPackage->shouldReceive('getExtra')
             ->once()
             ->andReturn([]);
-        
+
         $result = $this->rootResolver->getPatchDefinitions();
-        
+
         $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
@@ -113,7 +113,7 @@ class VersionConstraintResolverTest extends TestCase
                 ['name' => 'vendor/package2', 'version' => '2.0.0'],
             ]
         ];
-        
+
         $mockLocker = Mockery::mock(Locker::class);
         $mockLocker->shouldReceive('isLocked')
             ->once()
@@ -121,13 +121,13 @@ class VersionConstraintResolverTest extends TestCase
         $mockLocker->shouldReceive('getLockData')
             ->once()
             ->andReturn($lockData);
-            
+
         $this->composer->shouldReceive('getLocker')
             ->once()
             ->andReturn($mockLocker);
-        
+
         $result = $this->dependenciesResolver->getLockedPackages();
-        
+
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
         $this->assertEquals('vendor/package1', $result[0]['name']);
@@ -143,13 +143,13 @@ class VersionConstraintResolverTest extends TestCase
         $mockLocker->shouldReceive('isLocked')
             ->once()
             ->andReturn(false);
-            
+
         $this->composer->shouldReceive('getLocker')
             ->once()
             ->andReturn($mockLocker);
-        
+
         $result = $this->dependenciesResolver->getLockedPackages();
-        
+
         $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
@@ -165,7 +165,7 @@ class VersionConstraintResolverTest extends TestCase
                 ['name' => 'vendor/package2', 'version' => '2.0.0'],
             ]
         ];
-        
+
         $mockLocker = Mockery::mock(Locker::class);
         $mockLocker->shouldReceive('isLocked')
             ->once()
@@ -173,13 +173,13 @@ class VersionConstraintResolverTest extends TestCase
         $mockLocker->shouldReceive('getLockData')
             ->once()
             ->andReturn($lockData);
-            
+
         $this->composer->shouldReceive('getLocker')
             ->once()
             ->andReturn($mockLocker);
-        
+
         $result = $this->dependenciesResolver->getLockedPackage('vendor/package2');
-        
+
         $this->assertIsArray($result);
         $this->assertEquals('vendor/package2', $result['name']);
         $this->assertEquals('2.0.0', $result['version']);
@@ -193,7 +193,7 @@ class VersionConstraintResolverTest extends TestCase
         $lockData = [
             'packages' => []
         ];
-        
+
         $mockLocker = Mockery::mock(Locker::class);
         $mockLocker->shouldReceive('isLocked')
             ->once()
@@ -201,13 +201,13 @@ class VersionConstraintResolverTest extends TestCase
         $mockLocker->shouldReceive('getLockData')
             ->once()
             ->andReturn($lockData);
-            
+
         $this->composer->shouldReceive('getLocker')
             ->once()
             ->andReturn($mockLocker);
-        
+
         $result = $this->dependenciesResolver->getLockedPackage('vendor/nonexistent');
-        
+
         $this->assertNull($result);
     }
 
@@ -228,7 +228,7 @@ class VersionConstraintResolverTest extends TestCase
                 ['name' => 'vendor/package', 'version' => $packageVersion],
             ]
         ];
-        
+
         $mockLocker = Mockery::mock(Locker::class);
         $mockLocker->shouldReceive('isLocked')
             ->once()
@@ -236,18 +236,18 @@ class VersionConstraintResolverTest extends TestCase
         $mockLocker->shouldReceive('getLockData')
             ->once()
             ->andReturn($lockData);
-            
+
         $this->composer->shouldReceive('getLocker')
             ->once()
             ->andReturn($mockLocker);
-        
+
         // Create a patch with version constraint.
         $patch = new Patch();
         $patch->package = 'vendor/package';
         $patch->extra = ['version' => $constraint];
-        
+
         $result = $this->dependenciesResolver->validateVersionConstraint($patch);
-        
+
         $this->assertEquals($expected, $result);
     }
 
@@ -282,9 +282,9 @@ class VersionConstraintResolverTest extends TestCase
         $patch = new Patch();
         $patch->package = 'vendor/package';
         $patch->extra = []; // No version constraint.
-        
+
         $result = $this->dependenciesResolver->validateVersionConstraint($patch);
-        
+
         $this->assertTrue($result);
     }
 
@@ -295,7 +295,7 @@ class VersionConstraintResolverTest extends TestCase
     {
         // Mock empty locked packages.
         $lockData = ['packages' => []];
-        
+
         $mockLocker = Mockery::mock(Locker::class);
         $mockLocker->shouldReceive('isLocked')
             ->once()
@@ -303,17 +303,17 @@ class VersionConstraintResolverTest extends TestCase
         $mockLocker->shouldReceive('getLockData')
             ->once()
             ->andReturn($lockData);
-            
+
         $this->composer->shouldReceive('getLocker')
             ->once()
             ->andReturn($mockLocker);
-        
+
         $patch = new Patch();
         $patch->package = 'vendor/nonexistent';
         $patch->extra = ['version' => '^1.0'];
-        
+
         $result = $this->dependenciesResolver->validateVersionConstraint($patch);
-        
+
         $this->assertFalse($result);
     }
 }

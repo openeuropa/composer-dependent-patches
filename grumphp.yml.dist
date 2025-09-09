@@ -1,0 +1,10 @@
+imports:
+  - { resource: ./vendor/openeuropa/code-review-library/dist/library-conventions.yml }
+
+grumphp:
+  git_hook_variables:
+    EXEC_GRUMPHP_COMMAND: 'docker-compose exec -T php'
+
+parameters:
+  tasks.phpcs.triggered_by:
+    - php
