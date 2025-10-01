@@ -11,31 +11,28 @@ use OpenEuropa\ComposerDependentPatches\Resolver\RootComposer;
 class Resolver extends ComposerPatchesResolver
 {
     /**
+     * @var Plugin
+     */
+    protected Plugin $plugin;
+
+    /**
+     * Constructor.
+     */
+    public function __construct($composer, $io, $config, Plugin $plugin)
+    {
+        parent::__construct($composer, $io, $config);
+        $this->plugin = $plugin;
+    }
+
+    /**
      * {@inheritdoc}
      */
     protected function getPatchResolvers(): array
     {
         // Make sure that this plugin only uses the resolvers returned here.
         return [
-            new RootComposer($this->composer, $this->io, $this->getPluginInstance()),
-            new Dependencies($this->composer, $this->io, $this->getPluginInstance()),
+            new RootComposer($this->composer, $this->io, $this->plugin),
+            new Dependencies($this->composer, $this->io, $this->plugin),
         ];
-    }
-
-    /**
-     * Get instance of this plugin.
-     *
-     * @return Plugin
-     * @throws \RuntimeException If plugin instance cannot be found.
-     */
-    protected function getPluginInstance(): Plugin
-    {
-        foreach ($this->composer->getPluginManager()->getPlugins() as $plugin) {
-            if ($plugin instanceof Plugin) {
-                return $plugin;
-            }
-        }
-
-        throw new \RuntimeException('Plugin instance not found. Make sure the plugin is properly activated.');
     }
 }
