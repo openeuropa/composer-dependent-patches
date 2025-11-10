@@ -7,7 +7,6 @@ namespace OpenEuropa\ComposerDependentPatches\Tests;
 use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
-use Composer\Plugin\PluginManager;
 use cweagans\Composer\Resolver as ComposerPatchesResolver;
 use Mockery;
 use OpenEuropa\ComposerDependentPatches\Plugin;
@@ -77,7 +76,7 @@ class ResolverTest extends TestCase
 
         $result = $property->getValue($this->resolver);
 
-        $this->assertInstanceOf(Plugin::class, $result);
+        $this->assertInstanceOf(PluginInterface::class, $result);
         $this->assertSame($this->plugin, $result);
     }
 
