@@ -105,7 +105,7 @@ class Plugin extends Patches
      */
     public function resolvePatches(): PatchCollection
     {
-        $resolver = new Resolver($this->composer, $this->io, []);
+        $resolver = new Resolver($this->composer, $this->io, [], $this);
         return $resolver->loadFromResolvers();
     }
 

@@ -7,7 +7,6 @@ namespace OpenEuropa\ComposerDependentPatches\Tests;
 use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
-use Composer\Plugin\PluginManager;
 use cweagans\Composer\Resolver as ComposerPatchesResolver;
 use Mockery;
 use OpenEuropa\ComposerDependentPatches\Plugin;
@@ -25,6 +24,7 @@ class ResolverTest extends TestCase
     private Resolver $resolver;
     private Composer $composer;
     private IOInterface $io;
+    private Plugin $plugin;
 
     /**
      * Set up test fixtures.
@@ -33,8 +33,9 @@ class ResolverTest extends TestCase
     {
         $this->composer = Mockery::mock(Composer::class);
         $this->io = Mockery::mock(IOInterface::class);
+        $this->plugin = Mockery::mock(Plugin::class);
 
-        $this->resolver = new Resolver($this->composer, $this->io, []);
+        $this->resolver = new Resolver($this->composer, $this->io, [], $this->plugin);
     }
 
     /**
@@ -50,17 +51,6 @@ class ResolverTest extends TestCase
      */
     public function testGetPatchResolversReturnsCorrectResolvers(): void
     {
-        $mockPluginManager = Mockery::mock(PluginManager::class);
-        $mockPlugin = Mockery::mock(Plugin::class);
-
-        $this->composer->shouldReceive('getPluginManager')
-            ->twice() // Called twice: once for RootComposer, once for Dependencies.
-            ->andReturn($mockPluginManager);
-
-        $mockPluginManager->shouldReceive('getPlugins')
-            ->twice()
-            ->andReturn([$mockPlugin]);
-
         // Use reflection to access protected method.
         $reflection = new ReflectionClass($this->resolver);
         $method = $reflection->getMethod('getPatchResolvers');
@@ -75,58 +65,19 @@ class ResolverTest extends TestCase
     }
 
     /**
-     * Test that getPluginInstance returns the correct plugin instance.
+     * Test that the plugin instance is properly stored.
      */
-    public function testGetPluginInstanceReturnsPlugin(): void
+    public function testPluginInstanceIsStored(): void
     {
-        $mockPluginManager = Mockery::mock(PluginManager::class);
-        $mockPlugin = Mockery::mock(Plugin::class);
-        $mockOtherPlugin = Mockery::mock(PluginInterface::class);
-
-        $this->composer->shouldReceive('getPluginManager')
-            ->once()
-            ->andReturn($mockPluginManager);
-
-        $mockPluginManager->shouldReceive('getPlugins')
-            ->once()
-            ->andReturn([$mockOtherPlugin, $mockPlugin]);
-
-        // Use reflection to access protected method.
+        // Use reflection to access protected property.
         $reflection = new ReflectionClass($this->resolver);
-        $method = $reflection->getMethod('getPluginInstance');
-        $method->setAccessible(true);
+        $property = $reflection->getProperty('plugin');
+        $property->setAccessible(true);
 
-        $result = $method->invoke($this->resolver);
+        $result = $property->getValue($this->resolver);
 
-        $this->assertInstanceOf(Plugin::class, $result);
-        $this->assertSame($mockPlugin, $result);
-    }
-
-    /**
-     * Test that getPluginInstance throws exception when no plugin is found.
-     */
-    public function testGetPluginInstanceThrowsExceptionWhenNoPluginFound(): void
-    {
-        $mockPluginManager = Mockery::mock(PluginManager::class);
-        $mockOtherPlugin = Mockery::mock(PluginInterface::class);
-
-        $this->composer->shouldReceive('getPluginManager')
-            ->once()
-            ->andReturn($mockPluginManager);
-
-        $mockPluginManager->shouldReceive('getPlugins')
-            ->once()
-            ->andReturn([$mockOtherPlugin]);
-
-        // Use reflection to access protected method.
-        $reflection = new ReflectionClass($this->resolver);
-        $method = $reflection->getMethod('getPluginInstance');
-        $method->setAccessible(true);
-
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Plugin instance not found. Make sure the plugin is properly activated.');
-
-        $method->invoke($this->resolver);
+        $this->assertInstanceOf(PluginInterface::class, $result);
+        $this->assertSame($this->plugin, $result);
     }
 
     /**

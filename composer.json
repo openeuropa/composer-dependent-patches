@@ -5,7 +5,7 @@
   "license": "EUPL-1.2",
   "require": {
     "composer-plugin-api": "^2.0",
-    "cweagans/composer-patches": "^2.0@beta"
+    "cweagans/composer-patches": "^2.0"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
